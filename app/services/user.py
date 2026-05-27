@@ -4,6 +4,7 @@ from fastapi import HTTPException, status
 from ..repositories.user import UserRepository
 from uuid import UUID
 from ..models.user import User
+from ..core.security import verify_password
 
 
 # Класс для бизнес-логики пользователя
@@ -28,3 +29,12 @@ class UserService:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                                 detail="Пользователя с таким id не существует")
         return user
+
+    async def login(self, user: UserCreated) -> User:
+        user_db = await self.repository.get_user_by_email(str(user.email))
+        if not user_db:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
+                                detail="Неверные данные")
+        if not verify_password(user.password, user_db.hashed_password):
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
+        return user_db

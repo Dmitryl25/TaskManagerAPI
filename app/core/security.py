@@ -32,9 +32,9 @@ def create_refresh_token(user_id: UUID) -> str:
 # Декодинг токена
 def decode_token(token: str) -> dict | None:
     try:
-        decode_dict = jwt.decode(token,
-                        key=settings.jwt.secret_key,
-                        algorithms=[settings.jwt.algorithms])
-        return decode_dict
+        decode_t = jwt.decode(token,
+                              key=settings.jwt.secret_key,
+                              algorithms=[settings.jwt.algorithms])
+        return decode_t
     except JWTError:
         return None
