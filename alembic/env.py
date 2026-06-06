@@ -12,6 +12,7 @@ from app.db.base import Base
 from app.models.user import User
 from app.models.workspace import WorkSpace, WorkSpaceMember
 from app.models.project import Project
+from app.models.task import Task
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
