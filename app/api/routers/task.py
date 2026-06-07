@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, status
 from app.services.task import TaskService
-from app.schemas.task import TaskCreate, TaskResponse, TaskUpdate
+from app.schemas.task import TaskCreate, TaskResponse, TaskUpdate, TaskFilter
 from uuid import UUID
 from ..deps import get_db, get_current_user
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -22,10 +22,12 @@ async def create_tasks(project_id: UUID,
 
 @router.get("/projects/{project_id}/tasks")
 async def get_project_tasks(project_id: UUID,
+                            filters: TaskFilter = Depends(),
                             db: AsyncSession = Depends(get_db),
                             user: User = Depends(get_current_user)):
     tasks = await TaskService(db).get_project_tasks(project_id=project_id,
-                                                    user_id=user.id)
+                                                    user_id=user.id,
+                                                    filters=filters)
     return [TaskResponse.model_validate(task) for task in tasks]
 
 @router.get("/tasks/{task_id}")

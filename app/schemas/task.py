@@ -33,3 +33,10 @@ class TaskResponse(BaseModel):
     due_date: Optional[datetime] = None
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class TaskFilter(BaseModel):
+    status: Optional[str] = None
+    priority: Optional[str] = None
+    assignee_id: Optional[UUID] = None
+    search: Optional[str] = None

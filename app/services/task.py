@@ -3,7 +3,7 @@ from ..repositories.workspace import WorkspaceRepository
 from ..repositories.project import ProjectRepository
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..schemas.task import TaskCreate, TaskUpdate
+from ..schemas.task import TaskCreate, TaskUpdate, TaskFilter
 from uuid import UUID
 
 from fastapi import HTTPException, status
@@ -51,16 +51,18 @@ class TaskService:
 
     async def get_project_tasks(self,
                                 project_id: UUID,
-                                user_id: UUID):
+                                user_id: UUID,
+                                filters: TaskFilter):
         project: Project = await self.project_rep.get_by_id(project_id)
         if not project:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
         member = await self.workspace_rep.get_member(user_id=user_id,
-                                                   workspace_id=project.workspace_id)
+                                                     workspace_id=project.workspace_id)
         if not member:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
 
-        return await self.task_rep.get_project_tasks(project_id)
+        return await self.task_rep.get_project_tasks(project_id=project_id,
+                                                     filters=filters)
 
     async def update_task(self,
                           task_id: UUID,
