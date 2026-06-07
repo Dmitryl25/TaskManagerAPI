@@ -1,9 +1,9 @@
 from .base import BaseRepository
 from sqlalchemy.ext.asyncio import AsyncSession
-from ..schemas.project import ProjectCreate
+from ..schemas.project import ProjectCreate, ProjectUpdate
 from uuid import UUID
 from ..models.project import Project
-from sqlalchemy import select
+from sqlalchemy import select, update, delete
 
 class ProjectRepository(BaseRepository):
     def __init__(self,
@@ -33,7 +33,16 @@ class ProjectRepository(BaseRepository):
         projects = await self.session.execute(select(Project).where(Project.workspace_id == workspace_id))
         return projects.scalars().all()
 
-    async def update(self):
-        pass
-    async def delete(self):
-        pass
+    async def update(self,
+                     project_id: UUID,
+                     data: ProjectUpdate) -> Project:
+        await self.session.execute(update(Project)
+                                   .where(Project.id == project_id)
+                                   .values(data.model_dump(exclude_none=True)))
+        await self.session.commit()
+        return await self.get_by_id(project_id)
+
+    async def delete(self,
+                     project_id: UUID):
+        await self.session.execute(delete(Project).where(Project.id == project_id))
+        await self.session.commit()

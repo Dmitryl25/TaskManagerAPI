@@ -1,6 +1,6 @@
 from ..repositories.project import ProjectRepository
 from sqlalchemy.ext.asyncio import AsyncSession
-from ..schemas.project import ProjectCreate
+from ..schemas.project import ProjectCreate, ProjectUpdate
 from ..models.project import Project
 from ..repositories.workspace import WorkspaceRepository
 
@@ -54,6 +54,22 @@ class ProjectService:
         if not projects:
             return []
         return projects
+
+    async def update_project(self,
+                             project_id: UUID,
+                             user_id: UUID,
+                             data: ProjectUpdate) -> Project:
+        await self.get_by_id(project_id=project_id,
+                             user_id=user_id)
+        return await self.repository.update(project_id, data)
+
+    async def delete_project(self,
+                             project_id: UUID,
+                             user_id: UUID):
+        await self.get_by_id(project_id=project_id,
+                             user_id=user_id)
+        await self.repository.delete(project_id=project_id)
+
 
 
 
