@@ -42,5 +42,4 @@ class TaskRepository(BaseRepository):
                                    .where(Task.id == task_id)
                                    .values(data.model_dump(exclude_none=True)))
         await self.session.commit()
-        task = await self.session.execute(select(Task).where(Task.id == task_id))
-        return task.scalar_one_or_none()
+        return await self.get_by_id(task_id=task_id)
