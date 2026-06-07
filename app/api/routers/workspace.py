@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, status, Depends
 from app.services.workspace import WorkspaceService
 from ..deps import get_current_user, get_db
 from app.models.user import User
-from app.schemas.workspace import WorkspaceCreate, WorkspaceResponse
+from app.schemas.workspace import WorkspaceCreate, WorkspaceResponse, WorkspaceUpdate
 from sqlalchemy.ext.asyncio import AsyncSession
 from uuid import UUID
 from typing import List
@@ -36,3 +36,22 @@ async def get_workspace(workspace_id: UUID,
     workspace = await WorkspaceService(db).get_by_id(workspace_id=workspace_id,
                                                      user_id=user.id)
     return WorkspaceResponse.model_validate(workspace)
+
+
+@router.patch("/workspace/{workspace_id}")
+async def update_workspace(workspace_id: UUID,
+                           data: WorkspaceUpdate,
+                           db: AsyncSession = Depends(get_db),
+                           user: User = Depends(get_current_user)):
+    workspace_updated = await WorkspaceService(db).update_workspace(workspace_id=workspace_id,
+                                                                    data=data,
+                                                                    user_id=user.id)
+    return WorkspaceResponse.model_validate(workspace_updated)
+
+
+@router.delete("/workspace/{workspace_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_workspace(workspace_id: UUID,
+                           db: AsyncSession = Depends(get_db),
+                           user: User = Depends(get_current_user)):
+    await WorkspaceService(db).delete_workspace(workspace_id=workspace_id,
+                                                user_id=user.id)

@@ -2,10 +2,10 @@ from .base import BaseRepository
 from sqlalchemy.ext.asyncio import AsyncSession
 from ..models.workspace import WorkSpace, WorkSpaceMember
 from ..models.user import User
-from ..schemas.workspace import WorkspaceCreate
+from ..schemas.workspace import WorkspaceCreate, WorkspaceUpdate
 from uuid import UUID
-from sqlalchemy.sql import select
-from typing import List
+from sqlalchemy.sql import select, update, delete
+from typing import Sequence
 
 
 class WorkspaceRepository(BaseRepository):
@@ -38,22 +38,33 @@ class WorkspaceRepository(BaseRepository):
         workspace = await self.session.execute(select(WorkSpace).where(WorkSpace.id == id))
         return workspace.scalar_one_or_none()
 
-    async def update(self):
-        pass
+    async def update(self,
+                     workspace_id: UUID,
+                     data: WorkspaceUpdate) -> WorkSpace:
+        await self.session.execute(update(WorkSpace)
+                                   .where(WorkSpace.id == workspace_id)
+                                   .values(data.model_dump(exclude_none=True)))
+        await self.session.commit()
+        return await self.get_by_id(workspace_id)
 
-    async def delete(self):
-        pass
+
+    async def delete(self,
+                     workspace_id: UUID):
+        await self.session.execute(delete(WorkSpace)
+                                   .where(WorkSpace.id == workspace_id))
+        await self.session.commit()
+
 
     # получение всех workspaces пользователя
-    async def get_user_workspaces(self, user_id: UUID) -> User | None:
-        users = await self.session.execute(select(WorkSpace)
+    async def get_user_workspaces(self, user_id: UUID) -> Sequence[WorkSpace]:
+        workspaces = await self.session.execute(select(WorkSpace)
                                            .join(WorkSpaceMember, WorkSpace.id == WorkSpaceMember.workspace_id)
                                            .where(WorkSpaceMember.user_id == user_id))
-        return users.scalars().all()
+        return workspaces.scalars().all()
 
     # получение пользователя одного workspace
     async def get_member(self, user_id: UUID,
-                         workspace_id: UUID) -> User | None:
+                         workspace_id: UUID) -> WorkSpaceMember | None:
         member = await self.session.execute(select(WorkSpaceMember)
                                             .where(WorkSpaceMember.workspace_id == workspace_id,
                                                    WorkSpaceMember.user_id == user_id))
