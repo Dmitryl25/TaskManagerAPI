@@ -4,6 +4,7 @@ from ..schemas.task import TaskCreate, TaskUpdate
 from uuid import UUID
 from ..models.task import Task
 from sqlalchemy import select, update, delete
+from typing import Sequence
 
 class TaskRepository(BaseRepository):
     def __init__(self, session: AsyncSession):
@@ -27,7 +28,7 @@ class TaskRepository(BaseRepository):
         return task.scalar_one_or_none()
 
     async def get_project_tasks(self,
-                                project_id: UUID) -> List[Task]:
+                                project_id: UUID) -> Sequence[Task]:
         tasks = await self.session.execute(select(Task).where(Task.project_id == project_id))
         return tasks.scalars().all()
 

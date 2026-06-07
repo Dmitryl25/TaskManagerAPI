@@ -1,4 +1,5 @@
 from ..repositories.workspace import WorkspaceRepository
+from ..repositories.user import UserRepository
 from sqlalchemy.ext.asyncio import AsyncSession
 from ..schemas.workspace import WorkspaceCreate, WorkspaceUpdate
 from uuid import UUID
@@ -11,6 +12,8 @@ class WorkspaceService:
 
     def __init__(self, session: AsyncSession):
         self.repository = WorkspaceRepository(session)
+        self.user_rep = UserRepository(session)
+
 
     # добавление workspace
     async def create(self,
@@ -60,3 +63,82 @@ class WorkspaceService:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
 
         await self.repository.delete(workspace_id)
+
+
+    async def get_members(self,
+                          workspace_id: UUID,
+                          user_id: UUID):
+        await self.get_by_id(workspace_id=workspace_id,
+                             user_id=user_id)
+        return await self.repository.get_members(workspace_id=workspace_id)
+
+    async def add_member(self,
+                         workspace_id: UUID,
+                         current_user_id: UUID,
+                         new_user_id: UUID,
+                         role: str) -> WorkSpaceMember:
+        workspace = await self.repository.get_by_id(workspace_id)
+
+        if not workspace:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+
+        user = await self.repository.get_member(current_user_id, workspace_id)
+        if not user or user.role not in ['admin', 'owner']:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
+
+        new_user = await self.user_rep.get_by_id(new_user_id)
+        if not new_user:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+
+        new_member = await self.repository.add_member(workspace_id=workspace_id,
+                                                      user_id=new_user_id,
+                                                      role=role)
+        return new_member
+
+    async def update_member_role(self,
+                                 workspace_id: UUID,
+                                 current_user_id: UUID,
+                                 target_user_id: UUID,
+                                 role: str):
+        workspace = await self.repository.get_by_id(workspace_id)
+
+        if not workspace:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+
+        user = await self.repository.get_member(current_user_id, workspace_id)
+        if not user or user.role not in ['admin', 'owner']:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
+
+        target_user = await self.repository.get_member(target_user_id, workspace_id)
+        if not target_user:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+
+        member_updated = await self.repository.update_member_role(workspace_id=workspace_id,
+                                                                  user_id=target_user_id,
+                                                                  role=role)
+        return member_updated
+
+    async def remove_member(self,
+                            workspace_id: UUID,
+                            current_user_id: UUID,
+                            target_user_id: UUID):
+        workspace = await self.repository.get_by_id(workspace_id)
+
+        if not workspace:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+
+        user = await self.repository.get_member(current_user_id, workspace_id)
+        if not user or user.role not in ['admin', 'owner']:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
+
+        target_user = await self.repository.get_member(target_user_id, workspace_id)
+        if not target_user:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+
+        if target_user.role == "owner":
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
+
+        await self.repository.remove_member(workspace_id=workspace_id,
+                                            user_id=target_user_id)
+
+

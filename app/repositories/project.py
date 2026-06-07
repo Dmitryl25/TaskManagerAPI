@@ -4,6 +4,7 @@ from ..schemas.project import ProjectCreate, ProjectUpdate
 from uuid import UUID
 from ..models.project import Project
 from sqlalchemy import select, update, delete
+from typing import List, Sequence
 
 class ProjectRepository(BaseRepository):
     def __init__(self,
@@ -29,7 +30,7 @@ class ProjectRepository(BaseRepository):
         project = await self.session.execute(select(Project).where(Project.id == id))
         return project.scalar_one_or_none()
 
-    async def get_workspace_projects(self, workspace_id: UUID) -> List[Project]:
+    async def get_workspace_projects(self, workspace_id: UUID) -> Sequence[Project]:
         projects = await self.session.execute(select(Project).where(Project.workspace_id == workspace_id))
         return projects.scalars().all()
 

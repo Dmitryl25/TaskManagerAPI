@@ -70,3 +70,41 @@ class WorkspaceRepository(BaseRepository):
                                                    WorkSpaceMember.user_id == user_id))
         return member.scalar_one_or_none()
 
+    async def get_members(self, workspace_id: UUID) -> Sequence[WorkSpaceMember]:
+        members = await self.session.execute(select(WorkSpaceMember)
+                                             .where(WorkSpaceMember.workspace_id == workspace_id))
+        return members.scalars().all()
+
+    async def add_member(self,
+                         workspace_id: UUID,
+                         user_id: UUID,
+                         role: str) -> WorkSpaceMember:
+        new_member = WorkSpaceMember(workspace_id=workspace_id,
+                                     user_id=user_id,
+                                     role=role)
+        self.session.add(new_member)
+        await self.session.commit()
+        await self.session.refresh(new_member)
+        return new_member
+
+    async def update_member_role(self,
+                                 workspace_id: UUID,
+                                 user_id: UUID,
+                                 role: str) -> WorkSpaceMember | None:
+
+        await self.session.execute(update(WorkSpaceMember)
+                                   .where(WorkSpaceMember.workspace_id == workspace_id,
+                                          WorkSpaceMember.user_id == user_id)
+                                   .values(role=role))
+
+        await self.session.commit()
+        return await self.get_member(user_id, workspace_id)
+
+    async def remove_member(self,
+                            workspace_id: UUID,
+                            user_id: UUID) -> None:
+        await self.session.execute(delete(WorkSpaceMember)
+                                   .where(WorkSpaceMember.workspace_id == workspace_id,
+                                          WorkSpaceMember.user_id == user_id))
+        await self.session.commit()
+

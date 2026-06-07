@@ -23,4 +23,18 @@ class WorkspaceResponse(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
+class MemberResponse(BaseModel):
+    id: UUID
+    workspace_id: UUID
+    user_id: UUID
+    created_at: datetime
 
+    model_config = ConfigDict(from_attributes=True)
+
+
+class MemberRoleUpdate(BaseModel):
+    role: str
+
+class AddMemberRequest(BaseModel):
+    user_id: UUID
+    role: str
