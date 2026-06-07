@@ -1,5 +1,5 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from ..schemas.user import UserCreated
+from ..schemas.user import UserCreated, UserUpdate
 from fastapi import HTTPException, status
 from ..repositories.user import UserRepository
 from uuid import UUID
@@ -38,3 +38,8 @@ class UserService:
         if not verify_password(user.password, user_db.hashed_password):
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
         return user_db
+
+    async def update_user(self, user_id: UUID, data: UserUpdate) -> User:
+        await self.get_user_by_id(user_id)
+        return await self.repository.update(user_id=user_id,
+                                            data=data)

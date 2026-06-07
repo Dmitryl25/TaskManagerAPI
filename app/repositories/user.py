@@ -2,8 +2,8 @@ from .base import BaseRepository
 from sqlalchemy.ext.asyncio import AsyncSession
 from uuid import UUID
 from ..models.user import User
-from sqlalchemy import select
-from ..schemas.user import UserCreated
+from sqlalchemy import select, update, delete
+from ..schemas.user import UserCreated, UserUpdate
 from ..core.security import hash_password
 
 
@@ -34,8 +34,14 @@ class UserRepository(BaseRepository):
         await self.session.refresh(new_user)
         return new_user
 
-    def update(self):
-        pass
+    async def update(self,
+                     user_id: UUID,
+                     data: UserUpdate) -> User:
+        await self.session.execute(update(User)
+                                   .where(User.id == user_id)
+                                   .values(data.model_dump(exclude_none=True)))
+        await self.session.commit()
+        return await self.get_by_id(user_id)
 
     def delete(self):
         pass
