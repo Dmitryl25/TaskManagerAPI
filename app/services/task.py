@@ -42,9 +42,9 @@ class TaskService:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
 
         project: Project = await self.project_rep.get_by_id(task.project_id)
-        user = await self.workspace_rep.get_member(user_id=user_id,
+        member = await self.workspace_rep.get_member(user_id=user_id,
                                                    workspace_id=project.workspace_id)
-        if not user:
+        if not member:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
 
         return task
@@ -55,9 +55,9 @@ class TaskService:
         project: Project = await self.project_rep.get_by_id(project_id)
         if not project:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
-        user = await self.workspace_rep.get_member(user_id=user_id,
+        member = await self.workspace_rep.get_member(user_id=user_id,
                                                    workspace_id=project.workspace_id)
-        if not user:
+        if not member:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
 
         return await self.task_rep.get_project_tasks(project_id)
