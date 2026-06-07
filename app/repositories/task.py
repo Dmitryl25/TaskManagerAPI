@@ -1,9 +1,9 @@
 from .base import BaseRepository
 from sqlalchemy.ext.asyncio import AsyncSession
-from ..schemas.task import TaskCreate
+from ..schemas.task import TaskCreate, TaskUpdate
 from uuid import UUID
 from ..models.task import Task
-from sqlalchemy import select
+from sqlalchemy import select, update, delete
 
 class TaskRepository(BaseRepository):
     def __init__(self, session: AsyncSession):
@@ -31,8 +31,16 @@ class TaskRepository(BaseRepository):
         tasks = await self.session.execute(select(Task).where(Task.project_id == project_id))
         return tasks.scalars().all()
 
-    async def delete(self):
-        pass
+    async def delete(self, task_id: UUID):
+        await self.session.execute(delete(Task).where(Task.id == task_id))
 
-    async def update(self):
-        pass
+
+    async def update(self,
+                     task_id: UUID,
+                     data: TaskUpdate) -> Task:
+        await self.session.execute(update(Task)
+                                   .where(Task.id == task_id)
+                                   .values(data.model_dump(exclude_none=True)))
+        await self.session.commit()
+        task = await self.session.execute(select(Task).where(Task.id == task_id))
+        return task.scalar_one_or_none()

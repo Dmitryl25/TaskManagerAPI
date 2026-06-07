@@ -12,9 +12,9 @@ class BaseRepository:
         pass
 
     @abstractmethod
-    def update(self):
+    def update(self, **kwargs):
         pass
 
     @abstractmethod
-    def delete(self):
+    def delete(self, **kwargs):
         pass
