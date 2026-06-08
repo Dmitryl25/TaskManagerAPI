@@ -36,9 +36,24 @@ class RedisSettings(BaseSettings):
     redis_host: str
     redis_port: str
 
+class TestDatabaseSettings(BaseSettings):
+    model_config = SettingsConfigDict(env_file='.env',
+                                      extra='ignore')
+    test_postgres_db: str
+    test_postgres_user: str
+    test_db_password: str
+    test_postgres_host: str
+    test_postgres_port: str
+
+    @computed_field
+    @property
+    def database_url(self) -> str:
+        return f"postgresql+asyncpg://{self.test_postgres_user}:{self.test_db_password}@{self.test_postgres_host}:{self.test_postgres_port}/{self.test_postgres_db}"
+
 class Settings(BaseSettings):
     jwt: JWTSettings = Field(default_factory=JWTSettings)
     database: DataBaseSettings = Field(default_factory=DataBaseSettings)
     redis: RedisSettings = Field(default_factory=RedisSettings)
+    test_db: TestDatabaseSettings = Field(default_factory=TestDatabaseSettings)
 
 settings = Settings()
