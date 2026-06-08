@@ -4,7 +4,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.schemas.user import UserCreated, UserResponse, Tokens, RefreshTokenRequest
 from app.services.user import UserService
 from app.core.security import create_access_token, create_refresh_token
-
+from app.core.limiter import limiter
+from fastapi import Request
 
 router = APIRouter(prefix="/auth",
                    tags=["auth"])
@@ -15,9 +16,10 @@ async def register(user: UserCreated,
     user_register = await UserService(db).register(user)
     return UserResponse.model_validate(user_register)
 
-
 @router.post("/login", status_code=status.HTTP_200_OK)
-async def login(user: UserCreated,
+@limiter.limit("10/minute")
+async def login(request: Request,
+                user: UserCreated,
                 db: AsyncSession = Depends(get_db)):
     user_login, token = await UserService(db).login(user)
     return Tokens(access_token=create_access_token(user_login.id),

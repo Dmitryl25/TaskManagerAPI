@@ -36,6 +36,12 @@ class RedisSettings(BaseSettings):
     redis_host: str
     redis_port: str
 
+    @computed_field
+    @property
+    def url(self) -> str:
+        return f"redis://:{self.redis_password}@{self.redis_host}:{self.redis_port}/0"
+
+
 class TestDatabaseSettings(BaseSettings):
     model_config = SettingsConfigDict(env_file='.env',
                                       extra='ignore')
