@@ -67,7 +67,7 @@ class WorkspaceService:
 
     async def get_members(self,
                           workspace_id: UUID,
-                          user_id: UUID):
+                          user_id: UUID) -> Sequence[WorkSpaceMember]:
         await self.get_by_id(workspace_id=workspace_id,
                              user_id=user_id)
         return await self.repository.get_members(workspace_id=workspace_id)

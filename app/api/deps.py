@@ -6,16 +6,22 @@ from fastapi import status, HTTPException
 from ..models.user import User
 from ..services.user import UserService
 from sqlalchemy.ext.asyncio import AsyncSession
+import redis.asyncio as aioredis
+from app.core.config import settings
 from uuid import UUID
 
 
 http_bearer = HTTPBearer()
 
-
 # получение сессии БД
 async def get_db():
     async with AsyncSessionLocal() as session:
         yield session
+
+# получение redis-клиента
+async def get_redis():
+    async with aioredis.from_url(settings.redis.url) as client:
+        yield client
 
 # получение пользователя по access-токену
 async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(http_bearer),

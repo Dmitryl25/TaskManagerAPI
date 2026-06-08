@@ -1,13 +1,15 @@
+import json
+
 from fastapi import APIRouter, HTTPException, status, Depends
 from app.services.workspace import WorkspaceService
-from ..deps import get_current_user, get_db
+from ..deps import get_current_user, get_db, get_redis
 from app.models.user import User
 from app.schemas.workspace import WorkspaceCreate, WorkspaceResponse, WorkspaceUpdate
 from app.schemas.workspace import MemberResponse, MemberRoleUpdate, AddMemberRequest
 from sqlalchemy.ext.asyncio import AsyncSession
 from uuid import UUID
 from typing import List
-
+from redis import Redis
 
 router = APIRouter(prefix="/workspace",
                    tags=["workspace"])
@@ -39,7 +41,7 @@ async def get_workspace(workspace_id: UUID,
     return WorkspaceResponse.model_validate(workspace)
 
 
-@router.patch("/workspace/{workspace_id}")
+@router.patch("/{workspace_id}")
 async def update_workspace(workspace_id: UUID,
                            data: WorkspaceUpdate,
                            db: AsyncSession = Depends(get_db),
@@ -50,7 +52,7 @@ async def update_workspace(workspace_id: UUID,
     return WorkspaceResponse.model_validate(workspace_updated)
 
 
-@router.delete("/workspace/{workspace_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{workspace_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_workspace(workspace_id: UUID,
                            db: AsyncSession = Depends(get_db),
                            user: User = Depends(get_current_user)):
@@ -58,15 +60,24 @@ async def delete_workspace(workspace_id: UUID,
                                                 user_id=user.id)
 
 
-@router.get("/workspace/{workspace_id}/members")
+@router.get("/{workspace_id}/members")
 async def get_workspace_members(workspace_id: UUID,
                                 db: AsyncSession = Depends(get_db),
-                                user: User = Depends(get_current_user)):
-    members = await WorkspaceService(db).get_members(workspace_id=workspace_id,
-                                                     user_id=user.id)
-    return [MemberResponse.model_validate(member) for member in members]
+                                user: User = Depends(get_current_user),
+                                redis: Redis = Depends(get_redis)):
+    cached_data = await redis.get(f"members:{workspace_id}")
+    if not cached_data:
+        members = await WorkspaceService(db).get_members(workspace_id=workspace_id,
+                                                          user_id=user.id)
+        json_members = [MemberResponse.model_validate(m).model_dump(mode="json") for m in members]
+        await redis.set(f"members:{workspace_id}", json.dumps(json_members), ex=300)
+        return json_members
+    return json.loads(cached_data)
 
-@router.post("/workspace/{workspace_id}/members")
+
+
+
+@router.post("/{workspace_id}/members")
 async def add_member(workspace_id: UUID,
                      data: AddMemberRequest,
                      db: AsyncSession = Depends(get_db),
@@ -77,7 +88,7 @@ async def add_member(workspace_id: UUID,
                                                        role=data.role)
     return MemberResponse.model_validate(new_member)
 
-@router.patch("/workspace/{workspace_id}/members/{user_id}")
+@router.patch("/{workspace_id}/members/{user_id}")
 async def update_member_role(workspace_id: UUID,
                              user_id: UUID,
                              data: MemberRoleUpdate,
@@ -89,7 +100,7 @@ async def update_member_role(workspace_id: UUID,
                                                                    role=data.role)
     return MemberResponse.model_validate(member_updated)
 
-@router.delete("/workspace/{workspace_id}/members/{user_id}",
+@router.delete("/{workspace_id}/members/{user_id}",
                status_code=status.HTTP_204_NO_CONTENT)
 async def remove_member(workspace_id: UUID,
                         user_id: UUID,
