@@ -10,6 +10,7 @@ from ..repositories.token import TokenRepository
 import hashlib
 from datetime import datetime, timezone, timedelta
 from ..core.config import settings
+from ..tasks import send_welcome_email
 
 
 # Класс для бизнес-логики пользователя
@@ -26,6 +27,7 @@ class UserService:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
                                 detail="Пользователь с таким email уже существует")
         user_register = await self.repository.create(user)
+        send_welcome_email.delay(str(user.email))
         return user_register
 
     # получение пользователя по id
