@@ -81,11 +81,13 @@ async def get_workspace_members(workspace_id: UUID,
 async def add_member(workspace_id: UUID,
                      data: AddMemberRequest,
                      db: AsyncSession = Depends(get_db),
-                     user: User = Depends(get_current_user)):
+                     user: User = Depends(get_current_user),
+                     redis: Redis = Depends(get_redis)):
     new_member = await WorkspaceService(db).add_member(workspace_id=workspace_id,
                                                        current_user_id=user.id,
                                                        new_user_id=data.user_id,
                                                        role=data.role)
+    await redis.delete(f"members:{workspace_id}")
     return MemberResponse.model_validate(new_member)
 
 @router.patch("/{workspace_id}/members/{user_id}")
@@ -93,11 +95,13 @@ async def update_member_role(workspace_id: UUID,
                              user_id: UUID,
                              data: MemberRoleUpdate,
                              db: AsyncSession = Depends(get_db),
-                             user: User = Depends(get_current_user)):
+                             user: User = Depends(get_current_user),
+                             redis: Redis = Depends(get_redis)):
     member_updated = await WorkspaceService(db).update_member_role(workspace_id=workspace_id,
                                                                    current_user_id=user.id,
                                                                    target_user_id=user_id,
                                                                    role=data.role)
+    await redis.delete(f"members:{workspace_id}")
     return MemberResponse.model_validate(member_updated)
 
 @router.delete("/{workspace_id}/members/{user_id}",
@@ -105,7 +109,9 @@ async def update_member_role(workspace_id: UUID,
 async def remove_member(workspace_id: UUID,
                         user_id: UUID,
                         db: AsyncSession = Depends(get_db),
-                        user: User = Depends(get_current_user)):
+                        user: User = Depends(get_current_user),
+                        redis: Redis = Depends(get_redis)):
     await WorkspaceService(db).remove_member(workspace_id=workspace_id,
                                              current_user_id=user.id,
                                              target_user_id=user_id)
+    await redis.delete(f"members:{workspace_id}")
