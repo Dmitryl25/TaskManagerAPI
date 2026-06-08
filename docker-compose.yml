@@ -36,6 +36,25 @@ services:
       retries: 5
     networks:
       - teamflow_network
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    env_file: .env
+    depends_on:
+      - database
+      - redis
+    networks:
+      - teamflow_network
+  celery_worker:
+    build: .
+    env_file: .env
+    depends_on:
+      - database
+      - redis
+    networks:
+      - teamflow_network
+    command: uv run celery -A app.celery_app worker --loglevel=info
 volumes:
   postgres_data:
 
