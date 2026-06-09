@@ -6,6 +6,7 @@ from app.services.user import UserService
 from app.core.security import create_access_token, create_refresh_token
 from app.core.limiter import limiter
 from fastapi import Request
+from app.core.logger import logger
 
 router = APIRouter(prefix="/auth",
                    tags=["auth"])
@@ -14,6 +15,9 @@ router = APIRouter(prefix="/auth",
 async def register(user: UserCreated,
                    db: AsyncSession = Depends(get_db)):
     user_register = await UserService(db).register(user)
+
+    logger.info("user_registered", email=user.email)
+
     return UserResponse.model_validate(user_register)
 
 @router.post("/login", status_code=status.HTTP_200_OK)
@@ -22,6 +26,7 @@ async def login(request: Request,
                 user: UserCreated,
                 db: AsyncSession = Depends(get_db)):
     user_login, token = await UserService(db).login(user)
+    logger.info("user_logged_in", email=user.email)
     return Tokens(access_token=create_access_token(user_login.id),
                   refresh_token=token)
 

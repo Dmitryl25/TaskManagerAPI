@@ -11,6 +11,7 @@ import hashlib
 from datetime import datetime, timezone, timedelta
 from ..core.config import settings
 from ..tasks import send_welcome_email
+from ..core.logger import logger
 
 
 # Класс для бизнес-логики пользователя
@@ -41,9 +42,11 @@ class UserService:
     async def login(self, user: UserCreated) -> tuple[User, str]:
         user_db = await self.repository.get_user_by_email(str(user.email))
         if not user_db:
+            logger.warning("login_failed", email=str(user.email))
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
                                 detail="Неверные данные")
         if not verify_password(user.password, user_db.hashed_password):
+            logger.warning("login_failed", email=str(user.email))
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
 
         refresh_token = create_refresh_token(user_id=user_db.id)
