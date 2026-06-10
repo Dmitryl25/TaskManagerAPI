@@ -1,3 +1,5 @@
+import json
+
 from fastapi import APIRouter, Depends, status
 from app.services.task import TaskService
 from app.schemas.task import TaskCreate, TaskResponse, TaskUpdate, TaskFilter
@@ -5,6 +7,7 @@ from uuid import UUID
 from ..deps import get_db, get_current_user
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.user import User
+from app.core.connection_manager import manager
 
 
 router = APIRouter(tags=['tasks'])
@@ -46,6 +49,11 @@ async def update_task(task_id: UUID,
     updated_task = await TaskService(db).update_task(task_id=task_id,
                                                      user_id=user.id,
                                                      data=data)
+    if data.assignee_id:
+        await manager.send_message(user_id=str(data.assignee_id),
+                                   message=json.dumps({"type": "task_assigned",
+                                                       "task_id": str(task_id)}))
+
     return TaskResponse.model_validate(updated_task)
 
 @router.delete("/tasks/{task_id}", status_code=status.HTTP_204_NO_CONTENT)

@@ -9,6 +9,7 @@ from .api.routers.workspace import router as workspace_router
 from .api.routers.project import router as project_router
 from .api.routers.task import router as task_router
 from .api.routers.comment import router as comment_router
+from .api.routers.notifications import router as notifications_router
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from .core.limiter import limiter
@@ -24,6 +25,7 @@ app.include_router(workspace_router)
 app.include_router(project_router)
 app.include_router(task_router)
 app.include_router(comment_router)
+app.include_router(notifications_router)
 
 
 @app.get("/health")
