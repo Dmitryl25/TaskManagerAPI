@@ -73,7 +73,9 @@ async def run_async_migrations() -> None:
     and associate a connection with the context.
 
     """
-    config.set_main_option("sqlalchemy.url", settings.database.database_url)
+    import os
+    db_url = os.getenv("ALEMBIC_DATABASE_URL", settings.database.database_url)
+    config.set_main_option("sqlalchemy.url", db_url)
     connectable = async_engine_from_config(
         config.get_section(config.config_ini_section, {}),
         prefix="sqlalchemy.",

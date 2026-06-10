@@ -50,8 +50,6 @@ class WorkspaceRepository(BaseRepository):
 
     async def delete(self,
                      workspace_id: UUID):
-        await self.session.execute(delete(WorkSpaceMember)
-                                   .where(WorkSpaceMember.workspace_id == workspace_id))
         await self.session.execute(delete(WorkSpace)
                                    .where(WorkSpace.id == workspace_id))
         await self.session.commit()

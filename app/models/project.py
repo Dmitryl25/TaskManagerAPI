@@ -9,7 +9,7 @@ class Project(Base):
     __tablename__ = "projects"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    workspace_id = Column(UUID(as_uuid=True), ForeignKey('workspace.id'))
+    workspace_id = Column(UUID(as_uuid=True), ForeignKey('workspace.id', ondelete='CASCADE'))
     name = Column(String)
     description = Column(String, nullable=True)
     key = Column(String)
