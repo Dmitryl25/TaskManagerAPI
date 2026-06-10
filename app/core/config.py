@@ -56,10 +56,20 @@ class TestDatabaseSettings(BaseSettings):
     def database_url(self) -> str:
         return f"postgresql+asyncpg://{self.test_postgres_user}:{self.test_db_password}@{self.test_postgres_host}:{self.test_postgres_port}/{self.test_postgres_db}"
 
+class S3Settings(BaseSettings):
+    model_config = SettingsConfigDict(env_file='.env',
+                                      extra='ignore')
+    s3_access_key: str
+    s3_secret_key: str
+    s3_endpoint: str
+    s3_bucket: str
+
+
 class Settings(BaseSettings):
     jwt: JWTSettings = Field(default_factory=JWTSettings)
     database: DataBaseSettings = Field(default_factory=DataBaseSettings)
     redis: RedisSettings = Field(default_factory=RedisSettings)
     test_db: TestDatabaseSettings = Field(default_factory=TestDatabaseSettings)
+    s3: S3Settings = Field(default_factory=S3Settings)
 
 settings = Settings()

@@ -9,12 +9,13 @@ from app.api.deps import get_db, get_redis
 from app.main import app
 from app.core.limiter import limiter
 
-from app.models.user import User
-from app.models.token import Token
-from app.models.workspace import WorkSpace, WorkSpaceMember
-from app.models.project import Project
-from app.models.task import Task
-from app.models.comment import Comment
+from app.models.user import User  # noqa: F401
+from app.models.token import Token  # noqa: F401
+from app.models.workspace import WorkSpace, WorkSpaceMember  # noqa: F401
+from app.models.project import Project  # noqa: F401
+from app.models.task import Task  # noqa: F401
+from app.models.comment import Comment  # noqa: F401
+from app.models.attachment import Attachment  # noqa: F401
 
 
 @pytest.fixture(autouse=True)
